@@ -26,7 +26,8 @@ import java.io.File
  */
 class NotificationHelper(private val context: Context) {
     var notification: NotificationCompat.Builder? = null
-    private val manager: NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val manager: NotificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private var isDownloadSuccess = false
     private var isFailed = false
     private var currentProgress = 0
@@ -84,16 +85,26 @@ class NotificationHelper(private val context: Context) {
             val i = Intent(Intent.ACTION_VIEW)
             val uri: Uri
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                uri = VersionFileProvider.getUriForFile(context, context.packageName + ".versionProvider", file)
+                uri = VersionFileProvider.getUriForFile(
+                    context,
+                    context.packageName + ".versionProvider",
+                    file
+                )
                 ALog.e(context.packageName + "")
                 i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             } else {
                 uri = Uri.fromFile(file)
             }
             //设置intent的类型
-            i.setDataAndType(uri,
-                    "application/vnd.android.package-archive")
-            val pendingIntent = PendingIntent.getActivity(context, 0, i, 0)
+            i.setDataAndType(
+                uri,
+                "application/vnd.android.package-archive"
+            )
+            val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.getActivity(context, 0, i, PendingIntent.FLAG_IMMUTABLE)
+            } else {
+                PendingIntent.getActivity(context, 0, i, 0)
+            }
             notification?.let {
                 it.setContentIntent(pendingIntent)
                 it.setContentText(context.getString(R.string.versionchecklib_download_finish))
@@ -114,7 +125,12 @@ class NotificationHelper(private val context: Context) {
                 notification?.let {
                     val intent = Intent(context, PermissionDialogActivity::class.java)
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    val pendingIntent = PendingIntent.getActivity(
+                        context,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
                     it.setContentIntent(pendingIntent)
                     it.setContentText(context.getString(R.string.versionchecklib_download_fail))
                     it.setProgress(100, 0, false)
@@ -132,11 +148,13 @@ class NotificationHelper(private val context: Context) {
         val builder: NotificationCompat.Builder?
         val libNotificationBuilder: NotificationBuilder = versionBuilder.notificationBuilder
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationChannel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW)
+            val notificationChannel =
+                NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW)
             notificationChannel.enableLights(false)
             notificationChannel.lightColor = Color.RED
             notificationChannel.enableVibration(false)
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val manager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(notificationChannel)
         }
         builder = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -144,7 +162,8 @@ class NotificationHelper(private val context: Context) {
         builder.setSmallIcon(versionBuilder.notificationBuilder.icon)
         //set content title
         var contentTitle: String? = context.getString(R.string.app_name)
-        if (libNotificationBuilder.contentTitle != null) contentTitle = libNotificationBuilder.contentTitle
+        if (libNotificationBuilder.contentTitle != null) contentTitle =
+            libNotificationBuilder.contentTitle
         builder.setContentTitle(contentTitle)
         //set ticker
         var ticker: String? = context.getString(R.string.versionchecklib_downloading)
@@ -152,7 +171,8 @@ class NotificationHelper(private val context: Context) {
         builder.setTicker(ticker)
         //set content text
         contentText = context.getString(R.string.versionchecklib_download_progress)
-        if (libNotificationBuilder.contentText != null) contentText = libNotificationBuilder.contentText
+        if (libNotificationBuilder.contentText != null) contentText =
+            libNotificationBuilder.contentText
         builder.setContentText(String.format(contentText!!, 0))
         if (libNotificationBuilder.isRingtone) {
             val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -170,17 +190,26 @@ class NotificationHelper(private val context: Context) {
     val serviceNotification: Notification
         get() {
             val notifcationBuilder = NotificationCompat.Builder(context, channelid)
-                    .setContentTitle(context.getString(R.string.app_name))
-                    .setContentText(context.getString(R.string.versionchecklib_version_service_runing))
-                    .setAutoCancel(false)
+                .setContentTitle(context.getString(R.string.app_name))
+                .setContentText(context.getString(R.string.versionchecklib_version_service_runing))
+                .setAutoCancel(false)
 
-            BuilderManager.getDownloadBuilder()?.notificationBuilder?.icon?.let { notifcationBuilder.setSmallIcon(it) }
+            BuilderManager.getDownloadBuilder()?.notificationBuilder?.icon?.let {
+                notifcationBuilder.setSmallIcon(
+                    it
+                )
+            }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val notificationChannel = NotificationChannel(channelid, "version_service_name", NotificationManager.IMPORTANCE_LOW)
+                val notificationChannel = NotificationChannel(
+                    channelid,
+                    "version_service_name",
+                    NotificationManager.IMPORTANCE_LOW
+                )
                 notificationChannel.enableLights(false)
                 notificationChannel.enableVibration(false)
-                val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val manager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.createNotificationChannel(notificationChannel)
             }
             return notifcationBuilder.build()
@@ -192,12 +221,16 @@ class NotificationHelper(private val context: Context) {
 
         @RequiresApi(api = Build.VERSION_CODES.O)
         fun createSimpleNotification(context: Context): Notification {
-            val channel = NotificationChannel(channelid,
-                    "MyApp", NotificationManager.IMPORTANCE_DEFAULT)
-            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+            val channel = NotificationChannel(
+                channelid,
+                "MyApp", NotificationManager.IMPORTANCE_DEFAULT
+            )
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(
+                channel
+            )
             return NotificationCompat.Builder(context, channelid)
-                    .setContentTitle("")
-                    .setContentText("").build()
+                .setContentTitle("")
+                .setContentText("").build()
         }
     }
 
